@@ -66,28 +66,40 @@ public class Tile : MonoBehaviour
 
     public void ShowTileColor()
     {
-        if (GridManager.instance.ScanMode)
+        switch (type)
         {
-            switch (type)
-            {
-                case TileType.MAXIMUM:
-                    gameObject.GetComponent<Image>().color = Color.red;
-                    break;
-                case TileType.HALF:
-                    gameObject.GetComponent<Image>().color = Color.magenta;
-                    break;
-                case TileType.QUARTER:
-                    gameObject.GetComponent<Image>().color = Color.yellow;
-                    break;
-                default:
-                    gameObject.GetComponent<Image>().color = Color.gray;
-                    break;
-            }
+            case TileType.MAXIMUM:
+                gameObject.GetComponent<Image>().color = Color.red;
+                break;
+            case TileType.HALF:
+                gameObject.GetComponent<Image>().color = Color.magenta;
+                break;
+            case TileType.QUARTER:
+                gameObject.GetComponent<Image>().color = Color.yellow;
+                break;
+            default:
+                gameObject.GetComponent<Image>().color = Color.gray;
+                break;
         }
     }
 
-    public void ShowNeighbouringTiles()
+    public void Scan()
     {
-        GridManager.instance.ShowNeighbouringTiles();
+        GridManager.instance.Scan();
+    }
+
+    public void BreakTile()
+    {
+        type = TileType.MINIMAL;
+    }
+
+    public void DegradeTile()
+    {
+        if (type != TileType.MINIMAL) { type++; }
+    }
+
+    public void Extract()
+    {
+        GridManager.instance.Extract();
     }
 }

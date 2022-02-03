@@ -2,21 +2,29 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
+using TMPro;
 
 public class GridManager : MonoBehaviour
 {
     public static GridManager instance;
 
-    [SerializeField]
-    private float gridWidth = 0, gridHeight = 0;
-    [SerializeField]
-    private Tile tilePrefab = null;
-    [SerializeField]
-    private Canvas canvas = null;
-    [SerializeField]
-    private int NumOfMaximumTiles = 0;
+    [Header("Grid Creation")]
+    public float gridWidth = 0;
+    public float gridHeight = 0;
+    public Tile tilePrefab = null;
+    public Canvas canvas = null;
+    public int NumOfMaximumTiles = 0;
 
+    [Header("Scan Functionality")]
     public bool ScanMode = false;
+    public int ScanCounter = 6;
+    public TextMeshProUGUI ScanText;
+
+    [Header("Extraction Functionality")]
+    public bool ExtractMode = false;
+    public int ExtractCounter = 3;
+    public TextMeshProUGUI ExtractText;
 
     private List<Tile> tilesList = new List<Tile>();
 
@@ -126,16 +134,25 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    public void ScanTiles()
+    public void ScanModeToggle()
     {
         ScanMode = !ScanMode;
+        ExtractMode = !ScanMode;
     }
 
-    public void ShowNeighbouringTiles()
+    public void ExtractModeToggle()
+    {
+        ExtractMode = !ExtractMode;
+        ScanMode = !ExtractMode;
+    }
+
+    public void Scan()
     {
         Tile selectedTile = EventSystem.current.currentSelectedGameObject.GetComponent<Tile>();
-        if (ScanMode)
+        if (ScanMode && ScanCounter > 0)
         {
+            ScanCounter--;
+            ScanText.text = $"Numbers of Scans Left: {ScanCounter}";
             foreach (Tile tile in tilesList)
             {
                 for (int j = -1; j <= 1; j++)
@@ -150,5 +167,34 @@ public class GridManager : MonoBehaviour
                 }
             }
         }
+        else if (ScanCounter <= 0) ScanMode = false;
+    }
+
+    public void Extract()
+    {
+        var selectedTile = EventSystem.current.currentSelectedGameObject.GetComponent<Tile>();
+        selectedTile.BreakTile();
+
+        if (ExtractMode && ExtractCounter > 0)
+        {
+            ExtractCounter--;
+            ExtractText.text = $"Numbers of Extracts Left: {ExtractCounter}";
+
+            foreach (Tile tile in tilesList)
+            {
+                for (int j = -1; j <= 1; j++)
+                {
+                    for (int i = -1; i <= 1; i++)
+                    {
+                        if (tile.FindTile(new Vector2(selectedTile.GetId().x - i, selectedTile.GetId().y - j)))
+                        {
+                            tile.DegradeTile();
+                            tile.ShowTileColor();
+                        }
+                    }
+                }
+            }
+        }
+        else if (ExtractCounter <= 0) ExtractMode = false;
     }
 }
