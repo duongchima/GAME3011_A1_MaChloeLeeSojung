@@ -26,13 +26,18 @@ public class GridManager : MonoBehaviour
     public int ExtractCounter = 3;
     public TextMeshProUGUI ExtractText;
 
+    [Header("Resource Functionality")]
+    public int resourceScore = 0;
+    public TextMeshProUGUI ResourceText;
+
+
     private List<Tile> tilesList = new List<Tile>();
 
     [System.Obsolete]
     private void Awake()
     {
         instance = this;
-        Random.seed = 42;
+        Random.seed = Random.Range(1,100);
     }
 
     private void ClearGrid()
@@ -47,9 +52,21 @@ public class GridManager : MonoBehaviour
         }
     }
 
+    private void RestartCounters()
+    {
+        resourceScore = 0;
+        ScanCounter = 6;
+        ExtractCounter = 3;
+
+        ResourceText.text = $"Resources: {resourceScore}";
+        ScanText.text = $"Number of Scans Left: {ScanCounter}";
+        ExtractText.text = $"Number of Extract Left: {ExtractCounter}";
+    }
+
     public void GenerateGrid()
     {
         ClearGrid();
+        RestartCounters();
 
         Vector2 canvasSize = canvas.GetComponent<RectTransform>().rect.position;
         Rect tileSize = tilePrefab.GetComponent<RectTransform>().rect;
@@ -60,7 +77,7 @@ public class GridManager : MonoBehaviour
             {
                 var spawnedTile = Instantiate(tilePrefab, new Vector3(((x - gridWidth / 2) * tileSize.width) - canvasSize.x, ((y - gridWidth / 2) * tileSize.height) - canvasSize.y), Quaternion.identity, canvas.transform);
                 spawnedTile.name = $"Tile {x} {y}";
-                spawnedTile.CreateTile(new Vector2(spawnedTile.position.x, spawnedTile.position.y), new Vector2(x, y), TileType.MINIMAL, false);
+                spawnedTile.CreateTile(new Vector2(spawnedTile.position.x, spawnedTile.position.y), new Vector2(x, y), TileType.MINIMAL);
                 tilesList.Add(spawnedTile);
             }
         }
@@ -74,7 +91,6 @@ public class GridManager : MonoBehaviour
                 GenerateQuarterTiles(tile);
             }
         }
-        GenerateMinimalTiles();
     }
 
     private void GenerateMaximumTiles()
@@ -126,24 +142,16 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    private void GenerateMinimalTiles()
-    {
-        foreach (Tile tile in tilesList)
-        {
-            tile.SetMinimalTile();
-        }
-    }
-
     public void ScanModeToggle()
     {
         ScanMode = !ScanMode;
-        ExtractMode = !ScanMode;
+        ExtractMode = false;
     }
 
     public void ExtractModeToggle()
     {
         ExtractMode = !ExtractMode;
-        ScanMode = !ExtractMode;
+        ScanMode = false;
     }
 
     public void Scan()
@@ -173,8 +181,6 @@ public class GridManager : MonoBehaviour
     public void Extract()
     {
         var selectedTile = EventSystem.current.currentSelectedGameObject.GetComponent<Tile>();
-        selectedTile.BreakTile();
-
         if (ExtractMode && ExtractCounter > 0)
         {
             ExtractCounter--;
@@ -188,12 +194,17 @@ public class GridManager : MonoBehaviour
                     {
                         if (tile.FindTile(new Vector2(selectedTile.GetId().x - i, selectedTile.GetId().y - j)))
                         {
+                            resourceScore += tile.CollectResources();
                             tile.DegradeTile();
                             tile.ShowTileColor();
+
+                            Debug.Log("Tile: " + tile.name + ", Resources: " + tile.CollectResources());
                         }
                     }
                 }
             }
+            selectedTile.BreakTile();
+            ResourceText.text = $"Resources: {resourceScore}";
         }
         else if (ExtractCounter <= 0) ExtractMode = false;
     }

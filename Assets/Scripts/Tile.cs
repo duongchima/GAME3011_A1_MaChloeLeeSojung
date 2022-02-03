@@ -9,19 +9,14 @@ public class Tile : MonoBehaviour
 {
     public Vector2 id;
     public Vector2 position;
-
     public TileType type;
+    public int resources;
 
-    public bool SelectedTile;
-
-    UnityEvent myEvent = new UnityEvent();
-
-    public void CreateTile(Vector2 pos, Vector2 idNum, TileType tileType, bool selected)
+    public void CreateTile(Vector2 pos, Vector2 idNum, TileType tileType)
     {
         position = pos;
         id = idNum;
         type = tileType;
-        SelectedTile = selected;
     }
 
     public void SetPosition(int x, int y)
@@ -101,5 +96,20 @@ public class Tile : MonoBehaviour
     public void Extract()
     {
         GridManager.instance.Extract();
+    }
+
+    public int CollectResources()
+    {
+        switch (type)
+        {
+            case TileType.MAXIMUM:
+                return resources = 5000;
+            case TileType.HALF:
+                return resources = 2500;
+            case TileType.QUARTER:
+                return resources = 1250;
+            default:
+                return resources = 0;
+        }
     }
 }
