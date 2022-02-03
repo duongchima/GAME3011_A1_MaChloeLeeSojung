@@ -1,11 +1,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class GridManager : MonoBehaviour
 {
+    public static GridManager instance;
+
     [SerializeField]
-    private float gridWidth, gridHeight;
+    private float gridWidth = 0, gridHeight = 0;
     [SerializeField]
     private Tile tilePrefab = null;
     [SerializeField]
@@ -13,10 +16,14 @@ public class GridManager : MonoBehaviour
     [SerializeField]
     private int NumOfMaximumTiles = 0;
 
+    public bool ScanMode = false;
+
     private List<Tile> tilesList = new List<Tile>();
 
-    private void Start()
+    [System.Obsolete]
+    private void Awake()
     {
+        instance = this;
         Random.seed = 42;
     }
 
@@ -45,9 +52,7 @@ public class GridManager : MonoBehaviour
             {
                 var spawnedTile = Instantiate(tilePrefab, new Vector3(((x - gridWidth / 2) * tileSize.width) - canvasSize.x, ((y - gridWidth / 2) * tileSize.height) - canvasSize.y), Quaternion.identity, canvas.transform);
                 spawnedTile.name = $"Tile {x} {y}";
-                spawnedTile.position = new Vector2(spawnedTile.position.x, spawnedTile.position.y);
-                spawnedTile.id = new Vector2(x, y);
-                spawnedTile.type = TileType.QUARTER;
+                spawnedTile.CreateTile(new Vector2(spawnedTile.position.x, spawnedTile.position.y), new Vector2(x, y), TileType.MINIMAL, false);
                 tilesList.Add(spawnedTile);
             }
         }
@@ -55,12 +60,16 @@ public class GridManager : MonoBehaviour
         GenerateMaximumTiles();
         foreach (Tile tile in tilesList)
         {
-            if (tile.type.Equals(TileType.MAXIMUM)) GenerateHalfTiles(tile);
+            if (tile.type.Equals(TileType.MAXIMUM))
+            {
+                GenerateHalfTiles(tile);
+                GenerateQuarterTiles(tile);
+            }
         }
-        GenerateQuarterTiles();
+        GenerateMinimalTiles();
     }
 
-    public void GenerateMaximumTiles()
+    private void GenerateMaximumTiles()
     {
         int randomTileX, randomTileY; 
         for (int i = 0; i < NumOfMaximumTiles; i++)
@@ -79,7 +88,7 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    public void GenerateHalfTiles(Tile maxTile)
+    private void GenerateHalfTiles(Tile maxTile)
     {
         foreach(Tile tile in tilesList)
         {
@@ -94,11 +103,52 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    public void GenerateQuarterTiles()
+    private void GenerateQuarterTiles(Tile maxTile)
     {
-        foreach(Tile tile in tilesList)
+        foreach (Tile tile in tilesList)
         {
-            tile.SetQuarterTile();
+            for (int j = -2; j <= 2; j++)
+            {
+                tile.SetQuarterTile(new Vector2(maxTile.GetId().x - 2, maxTile.GetId().y + j));
+                tile.SetQuarterTile(new Vector2(maxTile.GetId().x + 2, maxTile.GetId().y + j));
+
+                tile.SetQuarterTile(new Vector2(maxTile.GetId().x + j, maxTile.GetId().y - 2));
+                tile.SetQuarterTile(new Vector2(maxTile.GetId().x + j, maxTile.GetId().y + 2));
+            }
+        }
+    }
+
+    private void GenerateMinimalTiles()
+    {
+        foreach (Tile tile in tilesList)
+        {
+            tile.SetMinimalTile();
+        }
+    }
+
+    public void ScanTiles()
+    {
+        ScanMode = !ScanMode;
+    }
+
+    public void ShowNeighbouringTiles()
+    {
+        Tile selectedTile = EventSystem.current.currentSelectedGameObject.GetComponent<Tile>();
+        if (ScanMode)
+        {
+            foreach (Tile tile in tilesList)
+            {
+                for (int j = -1; j <= 1; j++)
+                {
+                    for (int i = -1; i <= 1; i++)
+                    {
+                        if (tile.FindTile(new Vector2(selectedTile.GetId().x - i, selectedTile.GetId().y - j)))
+                        {
+                            tile.ShowTileColor();
+                        }
+                    }
+                }
+            }
         }
     }
 }

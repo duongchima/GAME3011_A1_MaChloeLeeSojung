@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using UnityEngine.Events;
 
 public class Tile : MonoBehaviour
 {
@@ -9,6 +11,18 @@ public class Tile : MonoBehaviour
     public Vector2 position;
 
     public TileType type;
+
+    public bool SelectedTile;
+
+    UnityEvent myEvent = new UnityEvent();
+
+    public void CreateTile(Vector2 pos, Vector2 idNum, TileType tileType, bool selected)
+    {
+        position = pos;
+        id = idNum;
+        type = tileType;
+        SelectedTile = selected;
+    }
 
     public void SetPosition(int x, int y)
     {
@@ -18,33 +32,62 @@ public class Tile : MonoBehaviour
 
     public Vector2 GetId()
     {
-        Debug.Log(id.x + "," + id.y);
         return id;
     }
 
     public void SetMaxTile(Vector2 maxId)
     {
-        if (id.Equals(maxId))
-        {
-            type = TileType.MAXIMUM;
-            this.gameObject.GetComponent<Image>().color = Color.red;
-        }
+        if (id.Equals(maxId)){ type = TileType.MAXIMUM; }
     }
 
     public void SetHalfTile(Vector2 maxId)
     {
-        if (id.Equals(maxId))
+        if (id.Equals(maxId)) { type = TileType.HALF; }
+    }
+
+    public void SetQuarterTile(Vector2 maxId)
+    {
+        if (id.Equals(maxId)) { type = TileType.QUARTER; }
+    }
+
+    public void SetMinimalTile()
+    {
+        if (!type.Equals(TileType.MAXIMUM) && !type.Equals(TileType.HALF) && !type.Equals(TileType.QUARTER))
         {
-            type = TileType.HALF;
-            this.gameObject.GetComponent<Image>().color = Color.magenta;
+            type = TileType.MINIMAL;
         }
     }
-    public void SetQuarterTile()
+
+    public Tile FindTile(Vector2 idNum)
     {
-        if (!type.Equals(TileType.MAXIMUM) && !type.Equals(TileType.HALF))
+        if (id.Equals(idNum)) return this;
+        else return null;
+    }
+
+    public void ShowTileColor()
+    {
+        if (GridManager.instance.ScanMode)
         {
-            type = TileType.QUARTER;
-            this.gameObject.GetComponent<Image>().color = Color.yellow;
+            switch (type)
+            {
+                case TileType.MAXIMUM:
+                    gameObject.GetComponent<Image>().color = Color.red;
+                    break;
+                case TileType.HALF:
+                    gameObject.GetComponent<Image>().color = Color.magenta;
+                    break;
+                case TileType.QUARTER:
+                    gameObject.GetComponent<Image>().color = Color.yellow;
+                    break;
+                default:
+                    gameObject.GetComponent<Image>().color = Color.gray;
+                    break;
+            }
         }
+    }
+
+    public void ShowNeighbouringTiles()
+    {
+        GridManager.instance.ShowNeighbouringTiles();
     }
 }

@@ -2,5 +2,6 @@
 {
     MAXIMUM,
     HALF,
-    QUARTER
+    QUARTER,
+    MINIMAL
 }
