@@ -15,6 +15,7 @@ public class GridManager : MonoBehaviour
     public Tile tilePrefab = null;
     public Canvas canvas = null;
     public int NumOfMaximumTiles = 0;
+    public TextMeshProUGUI CurrentMode;
 
     [Header("Scan Functionality")]
     public bool ScanMode = false;
@@ -30,6 +31,9 @@ public class GridManager : MonoBehaviour
     public int resourceScore = 0;
     public TextMeshProUGUI ResourceText;
 
+    [Header("Results")]
+    public GameObject ResultsPanel;
+    public TextMeshProUGUI ResultsText;
 
     private List<Tile> tilesList = new List<Tile>();
 
@@ -54,13 +58,16 @@ public class GridManager : MonoBehaviour
 
     private void RestartCounters()
     {
+        ResultsPanel.gameObject.SetActive(false);
+
         resourceScore = 0;
         ScanCounter = 6;
         ExtractCounter = 3;
 
-        ResourceText.text = $"Resources: {resourceScore}";
-        ScanText.text = $"Number of Scans Left: {ScanCounter}";
-        ExtractText.text = $"Number of Extract Left: {ExtractCounter}";
+        ResourceText.text = $"Resources: \n{resourceScore}";
+        ScanText.text = $"Scans Left: \n{ScanCounter}";
+        ExtractText.text = $"Extracts Left: \n{ExtractCounter}";
+        CurrentMode.text = "Mode: None";
     }
 
     public void GenerateGrid()
@@ -77,7 +84,7 @@ public class GridManager : MonoBehaviour
             {
                 var spawnedTile = Instantiate(tilePrefab, new Vector3(((x - gridWidth / 2) * tileSize.width) - canvasSize.x, ((y - gridWidth / 2) * tileSize.height) - canvasSize.y), Quaternion.identity, canvas.transform);
                 spawnedTile.name = $"Tile {x} {y}";
-                spawnedTile.CreateTile(new Vector2(spawnedTile.position.x, spawnedTile.position.y), new Vector2(x, y), TileType.MINIMAL);
+                spawnedTile.CreateTile(new Vector2(spawnedTile.position.x, spawnedTile.position.y), new Vector2(x, y), TileType.MINIMAL, false);
                 tilesList.Add(spawnedTile);
             }
         }
@@ -146,12 +153,14 @@ public class GridManager : MonoBehaviour
     {
         ScanMode = !ScanMode;
         ExtractMode = false;
+        CurrentMode.text = "Mode: Scan";
     }
 
     public void ExtractModeToggle()
     {
         ExtractMode = !ExtractMode;
         ScanMode = false;
+        CurrentMode.text = "Mode: Extract";
     }
 
     public void Scan()
@@ -160,7 +169,7 @@ public class GridManager : MonoBehaviour
         if (ScanMode && ScanCounter > 0)
         {
             ScanCounter--;
-            ScanText.text = $"Numbers of Scans Left: {ScanCounter}";
+            ScanText.text = $"Scans Left: \n{ScanCounter}";
             foreach (Tile tile in tilesList)
             {
                 for (int j = -1; j <= 1; j++)
@@ -170,12 +179,17 @@ public class GridManager : MonoBehaviour
                         if (tile.FindTile(new Vector2(selectedTile.GetId().x - i, selectedTile.GetId().y - j)))
                         {
                             tile.ShowTileColor();
+                            tile.isRevealed = true;
                         }
                     }
                 }
             }
         }
-        else if (ScanCounter <= 0) ScanMode = false;
+        else if (ScanCounter <= 0)
+        {
+            ScanMode = false;
+            CurrentMode.text = "Mode: None";
+        }
     }
 
     public void Extract()
@@ -184,7 +198,7 @@ public class GridManager : MonoBehaviour
         if (ExtractMode && ExtractCounter > 0)
         {
             ExtractCounter--;
-            ExtractText.text = $"Numbers of Extracts Left: {ExtractCounter}";
+            ExtractText.text = $"Extracts Left: \n{ExtractCounter}";
 
             foreach (Tile tile in tilesList)
             {
@@ -194,18 +208,30 @@ public class GridManager : MonoBehaviour
                     {
                         if (tile.FindTile(new Vector2(selectedTile.GetId().x - i, selectedTile.GetId().y - j)))
                         {
-                            resourceScore += tile.CollectResources();
-                            tile.DegradeTile();
-                            tile.ShowTileColor();
-
-                            Debug.Log("Tile: " + tile.name + ", Resources: " + tile.CollectResources());
+                            if (tile.isRevealed)
+                            {
+                                resourceScore += tile.CollectResources();
+                                tile.DegradeTile();
+                                tile.ShowTileColor();
+                            }
                         }
                     }
                 }
             }
             selectedTile.BreakTile();
-            ResourceText.text = $"Resources: {resourceScore}";
+            ResourceText.text = $"Resources: \n{resourceScore}";
         }
-        else if (ExtractCounter <= 0) ExtractMode = false;
+        else if (ExtractCounter <= 0)
+        {
+            ExtractMode = false;
+            CurrentMode.text = "Mode: None";
+            ShowResults();
+        }
+    }
+
+    public void ShowResults()
+    {
+        ResultsPanel.gameObject.SetActive(true);
+        ResultsText.text = $"Resources: {resourceScore}";
     }
 }

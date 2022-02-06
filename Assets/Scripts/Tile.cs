@@ -11,12 +11,14 @@ public class Tile : MonoBehaviour
     public Vector2 position;
     public TileType type;
     public int resources;
+    public bool isRevealed;
 
-    public void CreateTile(Vector2 pos, Vector2 idNum, TileType tileType)
+    public void CreateTile(Vector2 pos, Vector2 idNum, TileType tileType, bool founded)
     {
         position = pos;
         id = idNum;
         type = tileType;
+        isRevealed = founded;
     }
 
     public void SetPosition(int x, int y)
